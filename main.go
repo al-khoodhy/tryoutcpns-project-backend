@@ -1,34 +1,63 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"time"
 	"tryoutcpns-project-backend/config"
 	"tryoutcpns-project-backend/handlers"
-	"tryoutcpns-project-backend/migrations"
+	"tryoutcpns-project-backend/middleware"
+	"tryoutcpns-project-backend/utils"
 
 	"github.com/gorilla/mux"
+	"github.com/ulule/limiter/v3"
+	"github.com/ulule/limiter/v3/drivers/store/memory"
 )
 
 func main() {
+	// Load environment variables from .env
+	if err := utils.LoadEnv(); err != nil {
+		log.Fatalf("Failed to load .env file: %v", err)
+	}
+
+	// Initialize database
 	config.InitDB()
-	defer config.DB.Close()
 
-	migrations.CreateTables(config.DB)
+	// Migrate tables
+	config.MigrateTables()
 
+	// Initialize rate limiter
+	rateLimiter := limiter.New(memory.NewStore(), limiter.Options{
+		Max:     10, // Max 10 requests per minute
+		Default: 1 * time.Minute,
+	})
+
+	// Create router
 	r := mux.NewRouter()
 
-	// Route untuk registrasi
+	// Auth routes
 	r.HandleFunc("/api/register", handlers.Register).Methods("POST")
-
-	// Route untuk login
 	r.HandleFunc("/api/login", handlers.Login).Methods("POST")
 
-	// Route untuk get user (dengan middleware)
-	r.HandleFunc("/api/users/{id}", handlers.GetUser).Methods("GET").UseHandler(handlers.AuthMiddleware(handlers.GetUser))
+	// Protected routes
+	authMiddleware := middleware.AuthMiddleware
+	r.HandleFunc("/api/users/{id}", handlers.GetUser).Methods("GET").Use(authMiddleware)
+	r.HandleFunc("/api/packages", handlers.GetAllPackages).Methods("GET").Use(authMiddleware)
+	r.HandleFunc("/api/questions", handlers.GetAllQuestions).Methods("GET").Use(authMiddleware)
+	r.HandleFunc("/api/results", handlers.GetAllResults).Methods("GET").Use(authMiddleware)
+	r.HandleFunc("/api/transactions", handlers.CreateTransaction).Methods("POST").Use(authMiddleware)
 
-	// Tambahkan route lain sesuai kebutuhan...
+	// Apply rate limiter middleware
+	r.Use(middleware.RateLimitMiddleware(rateLimiter))
 
-	log.Println("🚀 Server is running on :8080")
-	log.Fatal(http.ListenAndServe(":8080", r))
+	// Start server
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	fmt.Printf("🚀 Server is running on http://localhost:%s\n", port)
+	log.Fatal(http.ListenAndServe(":"+port, r))
 }
