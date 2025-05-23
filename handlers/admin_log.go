@@ -1,12 +1,10 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
-	"strconv"
 	"tryoutcpns-project-backend/config"
 	"tryoutcpns-project-backend/models"
-
-	"github.com/gorilla/mux"
 )
 
 func CreateAdminLog(w http.ResponseWriter, r *http.Request) {

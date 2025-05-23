@@ -17,7 +17,7 @@ import (
 )
 
 func main() {
-	// Load environment variables from .env
+	// Load environment variables
 	if err := utils.LoadEnv(); err != nil {
 		log.Fatalf("Failed to load .env file: %v", err)
 	}
@@ -28,29 +28,20 @@ func main() {
 	// Migrate tables
 	config.MigrateTables()
 
-	// Initialize rate limiter
-	rateLimiter := limiter.New(memory.NewStore(), limiter.Options{
-		Max:     10, // Max 10 requests per minute
-		Default: 1 * time.Minute,
-	})
+	// Inisialisasi rate limiter
+	store := memory.NewStore()
+	rate := limiter.Rate{
+		Period: 1 * time.Minute,
+		Limit:  10,
+	}
+	rawLimiter := limiter.New(store, rate)
+	rateLimiterMiddleware := middleware.RateLimitMiddleware(rawLimiter)
 
-	// Create router
+	// Buat router
 	r := mux.NewRouter()
 
-	// Auth routes
-	r.HandleFunc("/api/register", handlers.Register).Methods("POST")
-	r.HandleFunc("/api/login", handlers.Login).Methods("POST")
-
-	// Protected routes
-	authMiddleware := middleware.AuthMiddleware
-	r.HandleFunc("/api/users/{id}", handlers.GetUser).Methods("GET").Use(authMiddleware)
-	r.HandleFunc("/api/packages", handlers.GetAllPackages).Methods("GET").Use(authMiddleware)
-	r.HandleFunc("/api/questions", handlers.GetAllQuestions).Methods("GET").Use(authMiddleware)
-	r.HandleFunc("/api/results", handlers.GetAllResults).Methods("GET").Use(authMiddleware)
-	r.HandleFunc("/api/transactions", handlers.CreateTransaction).Methods("POST").Use(authMiddleware)
-
-	// Apply rate limiter middleware
-	r.Use(middleware.RateLimitMiddleware(rateLimiter))
+	// Daftarkan semua routes
+	handlers.RegisterRoutes(r, rateLimiterMiddleware)
 
 	// Start server
 	port := os.Getenv("PORT")

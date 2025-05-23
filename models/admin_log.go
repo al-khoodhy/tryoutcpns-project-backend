@@ -1,9 +1,5 @@
 package models
 
-import (
-	"gorm.io/gorm"
-)
-
 type AdminLog struct {
 	ID          uint   `gorm:"primaryKey"`
 	AdminID     uint   `gorm:"not null"`

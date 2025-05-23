@@ -1,9 +1,5 @@
 package models
 
-import (
-	"gorm.io/gorm"
-)
-
 type UserVoucher struct {
 	ID        uint   `gorm:"primaryKey"`
 	UserID    uint   `gorm:"not null"`

@@ -1,12 +1,12 @@
 package handlers
 
 import (
+	"encoding/json"
+	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
 	"tryoutcpns-project-backend/config"
 	"tryoutcpns-project-backend/models"
-
-	"github.com/gorilla/mux"
 )
 
 func GetMateri(w http.ResponseWriter, r *http.Request) {

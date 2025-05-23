@@ -3,13 +3,13 @@ package utils
 import (
 	"database/sql"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/gofrs/uuid"
 	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/crypto/bcrypt"
-	"time"
 )
-
-
 
 // HashPassword menghash password menggunakan bcrypt
 func HashPassword(password string) (string, error) {

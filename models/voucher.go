@@ -1,19 +1,19 @@
 package models
 
 import (
-	"gorm.io/gorm"
+	"time"
 )
 
 type Voucher struct {
-	ID           uint    `gorm:"primaryKey"`
-	Code         string  `gorm:"type:varchar(50);unique;not null"`
-	DiscountType string  `gorm:"type:enum('percentage','fixed');not null"`
-	Value        float64 `gorm:"type:decimal(10,2);not null"`
-	ValidFrom    string  `gorm:"type:datetime;not null"`
-	ValidUntil   string  `gorm:"type:datetime;not null"`
-	UsageLimit   int     `gorm:"type:int;default:1"`
-	UsedCount    int     `gorm:"type:int;default:0"`
-	IsGlobal     bool    `gorm:"default:false"`
-	CreatedAt    string  `gorm:"autoCreateTime"`
-	UpdatedAt    string  `gorm:"autoUpdateTime"`
+	ID           uint      `gorm:"primaryKey"`
+	Code         string    `gorm:"type:varchar(50);unique;not null"`
+	DiscountType string    `gorm:"type:varchar(20);not null;check:discount_type IN ('percentage','fixed')"`
+	Value        float64   `gorm:"not null"`
+	ValidFrom    time.Time `gorm:"not null"`
+	ValidUntil   time.Time `gorm:"not null"`
+	UsageLimit   int       `gorm:"default:1"`
+	UsedCount    int       `gorm:"default:0"`
+	IsGlobal     bool      `gorm:"default:false"`
+	CreatedAt    time.Time `gorm:"autoCreateTime"`
+	UpdatedAt    time.Time `gorm:"autoUpdateTime"`
 }
