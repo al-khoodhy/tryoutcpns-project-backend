@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+
+
 // HashPassword menghash password menggunakan bcrypt
 func HashPassword(password string) (string, error) {
 	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
