@@ -26,7 +26,7 @@ func main() {
 	config.InitDB()
 
 	// Migrate tables
-	config.MigrateTables()
+	// config.MigrateTables()
 
 	// Inisialisasi rate limiter
 	store := memory.NewStore()

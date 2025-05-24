@@ -3,6 +3,7 @@ package utils
 import (
 	"database/sql"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -32,8 +33,8 @@ func GenerateJWTToken(userID uint) (string, error) {
 		"sub": userID,
 		"exp": time.Now().Add(time.Hour * 24).Unix(),
 	})
-
-	tokenString, err := token.SignedString([]byte("your-secret-key-1234567890")) // Ganti dengan secret key dari .env
+	// Ganti dengan secret key dari .env
+	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 	if err != nil {
 		return "", err
 	}
@@ -47,7 +48,8 @@ func ValidateJWTToken(tokenString string) (uint, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 		}
-		return []byte("your-secret-key-1234567890"), nil // Ganti dengan secret key dari .env
+		// Ganti dengan secret key dari .env
+		return []byte(os.Getenv("JWT_SECRET")), nil
 	})
 
 	if err != nil {

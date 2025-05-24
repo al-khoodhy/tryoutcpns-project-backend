@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// LoadEnv loads environment variables from .env file
+// LoadEnv loads environment variables from a .env file manually (without external lib)
 func LoadEnv() error {
 	file, err := os.Open(".env")
 	if err != nil {
@@ -15,12 +15,16 @@ func LoadEnv() error {
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
+
 	for scanner.Scan() {
-		line := scanner.Text()
+		line := strings.TrimSpace(scanner.Text())
+
+		// Lewati baris kosong atau komentar
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
 
+		// Pecah berdasarkan tanda '=' hanya sekali
 		parts := strings.SplitN(line, "=", 2)
 		if len(parts) != 2 {
 			continue
@@ -29,7 +33,16 @@ func LoadEnv() error {
 		key := strings.TrimSpace(parts[0])
 		value := strings.TrimSpace(parts[1])
 
-		os.Setenv(key, value)
+		// Hilangkan kutipan di value jika ada
+		value = strings.Trim(value, `"'`)
+
+		// Set ke environment
+		_ = os.Setenv(key, value)
+	}
+
+	// Cek error scanning
+	if err := scanner.Err(); err != nil {
+		return err
 	}
 
 	return nil

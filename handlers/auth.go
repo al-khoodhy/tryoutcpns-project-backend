@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"encoding/json"
-	// "fmt"
 	"net/http"
+	"os"
 	"time"
 	"tryoutcpns-project-backend/config"
 	"tryoutcpns-project-backend/models"
@@ -12,7 +12,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-var jwtSecret = []byte("your-secret-key-1234567890") // Ganti dengan secret key yang aman
+var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 
 func Register(w http.ResponseWriter, r *http.Request) {
 	var user models.User
@@ -38,14 +38,24 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Simpan user baru
+	// Simpan user baru terlebih dahulu untuk mendapatkan ID
 	if err := config.DB.Create(&user).Error; err != nil {
 		http.Error(w, "Failed to register user", http.StatusInternalServerError)
 		return
 	}
 
+	// Generate referral ID dan update user
+	user.ReferralID = utils.GenerateReferralID(user.ID, user.Email)
+	if err := config.DB.Model(&user).Update("referral_id", user.ReferralID).Error; err != nil {
+		http.Error(w, "Failed to update referral ID", http.StatusInternalServerError)
+		return
+	}
+
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{"message": "User registered successfully"})
+	json.NewEncoder(w).Encode(map[string]string{
+		"message":     "User registered successfully",
+		"referral_id": user.ReferralID,
+	})
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
@@ -65,13 +75,11 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Verifikasi password
 	if !utils.CheckPasswordHash(loginData.Password, user.Password) {
 		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
 		return
 	}
 
-	// Generate JWT token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": user.ID,
 		"exp": time.Now().Add(time.Hour * 24).Unix(),
@@ -80,5 +88,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	tokenString, _ := token.SignedString(jwtSecret)
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"token": tokenString})
+	json.NewEncoder(w).Encode(map[string]string{
+		"token": tokenString,
+	})
 }

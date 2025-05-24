@@ -10,7 +10,7 @@ type User struct {
 	Password   string    `gorm:"type:varchar(255);not null"`
 	Role       string    `gorm:"type:enum('admin','affiliate','user');default:'user';not null"`
 	IsActive   bool      `gorm:"default:true"`
-	ReferralID string    `gorm:"type:varchar(36);unique"`
+	ReferralID string    `gorm:"type:varchar(36);not null"`
 	CreatedAt  time.Time `gorm:"autoCreateTime"`
 	UpdatedAt  time.Time `gorm:"autoUpdateTime"`
 }

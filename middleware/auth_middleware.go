@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"tryoutcpns-project-backend/config"
 	"tryoutcpns-project-backend/models"
@@ -43,13 +42,13 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			http.Error(w, "Invalid token claims", http.StatusUnauthorized)
 			return
 		}
-		
-		sub, ok := claims["sub"].(string)
+
+		sub, ok := claims["sub"].(float64)
 		if !ok {
 			http.Error(w, "Invalid user ID in token", http.StatusUnauthorized)
 			return
 		}
-		userID, err := strconv.Atoi(sub)
+		userID := int(sub)
 		if err != nil {
 			http.Error(w, "Invalid user ID format", http.StatusUnauthorized)
 			return
